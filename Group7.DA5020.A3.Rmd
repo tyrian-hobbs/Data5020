@@ -12,6 +12,7 @@ output: pdf_document
 # Load libraries & tibble
 library(dplyr)
 library(tidyr) #for the replace.na function
+library(knitr)
 
 df.full <- read.csv("http://artificium.us/datasets/ObesityPredictionData-Modified.csv") |>
   tibble::as_tibble()
@@ -47,9 +48,11 @@ We filtered `r nrow(df.full)-nrow(df.clean)` rows with weights outside 2.5x the 
 
 ## Sampling & Height Comparison
 ```{r Q4 sampling}
+# Getting the partial dataset
 set.seed(44376)
 df.partial <- df.clean |> sample_frac(0.4)
 
+# Calculating heights
 mean_height_full <- mean(df.clean$Height, na.rm = TRUE)
 CI_height_full <- t.test(df.clean$Height, conf.level = 0.95)$conf.int
 
@@ -60,3 +63,33 @@ CI_height_part <- t.test(df.partial$Height, conf.level = 0.95)$conf.int
 The full dataset has a mean height of `r round(mean_height_full, digits=3)` and 95% confidence interval [`r round(CI_height_full, digits=3)`]. The partial dataset has mean height `r round(mean_height_part, digits=3)` and 95% confidence interval [`r round(CI_height_part, digits=3)`]. Both the means and confidence intervals are incredibly similar, which is encouraging; in theory a random sample should have the same mean as the population it draws from. 
 
 ## Summaries & Correlation
+``` {r Q5 summaries}
+# Getting patient numbers and gender percentages
+overview <- df.clean |>
+  summarise(
+    Total = n(),
+    PercentFemale = sum(Gender == "Female", na.rm = TRUE) / n() * 100,
+    PercentMale = sum(Gender == "Male", na.rm = TRUE) / n() * 100
+  )
+```
+
+There are `r overview$Total` total patients, of which `r round(overview$PercentFemale, digits=3)`% are female and `r round(overview$PercentMale, digits=3)`% are male.
+
+``` {r Q5 table}
+#Make & Display the counts table
+obesity_table <- df.clean |>
+  filter(Obesity %in% c("Obesity_Type_I", "Obesity_Type_II")) |>
+  group_by(Gender, Obesity) |>
+  summarise(n = n(), .groups = "drop_last")
+
+obesity_table |> kable(
+  col.names = c("Gender", "Obesity Type", "Count"),
+  booktabs = TRUE,
+  caption = "Type I and Type II obesity counts by gender")
+```
+
+``` {r Q5 pearson}
+# Finding correlation
+cor <- cor.test(df.clean$Age, df.clean$BMI, method = "pearson")
+```
+Age and BMI have a correlation coefficient of `r round(cor$estimate, digits=3)`. This is positive, meaning older people tend to have higher BMI, but close to zero, meaning the correlation is fairly weak. The p-value is `r cor$p.value`, well under 0.05, meaning the correlation is statistically significant.
