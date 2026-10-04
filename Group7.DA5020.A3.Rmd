@@ -1,11 +1,36 @@
 ---
 title: "Explore Obesity Data"
+subtitle: "DA5020 / Assignment A3"
 author: "Chen, Angeline & Hobbs, Tyrian"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+## Setup & Import 
 
+```{r Q1 setup & import}
+# Load libraries & tibble
+library(dplyr)
+library(tidyr) #for the replace.na function
+
+df.full <- tibble::as_tibble(read.csv("http://artificium.us/datasets/ObesityPredictionData-Modified.csv"))
+glimpse(df.full)
+```
+## Cleaning & Missing Values
+```{r Q2 cleaning}
+# Removing unnecessary columns and filling empty values
+df.clean <- df.full %>% select(-CH2O, -SCC, -FAF, -TUE, -CALC)
+
+df.clean <- df.clean |>
+  group_by(Gender) |>
+  mutate(
+    Height = replace_na(Height, mean(Height, trim = 0.05, na.rm = TRUE)),
+    Age = replace_na(Age, median(Age, na.rm = TRUE))
+  ) |>
+  ungroup()
+
+df.clean |> summarise(across(everything(), ~sum(is.na(.))))
+```
+After removing unnecessary columns and replacing the missing columns in Height and Age, there are no more missing values in our dataset.
+
+## Outliers & BMI Feature
