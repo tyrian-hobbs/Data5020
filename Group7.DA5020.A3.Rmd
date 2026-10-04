@@ -13,7 +13,8 @@ output: pdf_document
 library(dplyr)
 library(tidyr) #for the replace.na function
 
-df.full <- tibble::as_tibble(read.csv("http://artificium.us/datasets/ObesityPredictionData-Modified.csv"))
+df.full <- read.csv("http://artificium.us/datasets/ObesityPredictionData-Modified.csv") |>
+  tibble::as_tibble()
 glimpse(df.full)
 ```
 ## Cleaning & Missing Values
@@ -35,9 +36,27 @@ After removing unnecessary columns and replacing the missing columns in Height a
 
 ## Outliers & BMI Feature
 ``` {r Q3 outliers}
+#Removing outliers, calculating BMI
 df.clean <- df.clean |> 
-  filter(abs(Weight - mean(Weight)) <= 2.5 * sd(Weight)) |> #using abs() to remove both tails at once
+  #using abs() to remove both tails at once
+  filter(abs(Weight - mean(Weight, na.rm = TRUE)) <= 2.5 * sd(Weight, na.rm = TRUE)) |> 
   mutate(BMI = Weight/(Height**2))
 ```
 
 We filtered `r nrow(df.full)-nrow(df.clean)` rows with weights outside 2.5x the standard deviation. Afterwards, the mean BMI is `r round(mean(df.clean$BMI), digits=3)`.
+
+## Sampling & Height Comparison
+```{r Q4 sampling}
+set.seed(44376)
+df.partial <- df.clean |> sample_frac(0.4)
+
+mean_height_full <- mean(df.clean$Height, na.rm = TRUE)
+CI_height_full <- t.test(df.clean$Height, conf.level = 0.95)$conf.int
+
+mean_height_part <- mean(df.partial$Height, na.rm = TRUE)
+CI_height_part <- t.test(df.partial$Height, conf.level = 0.95)$conf.int
+```
+
+The full dataset has a mean height of `r round(mean_height_full, digits=3)` and 95% confidence interval [`r round(CI_height_full, digits=3)`]. The partial dataset has mean height `r round(mean_height_part, digits=3)` and 95% confidence interval [`r round(CI_height_part, digits=3)`]. Both the means and confidence intervals are incredibly similar, which is encouraging; in theory a random sample should have the same mean as the population it draws from. 
+
+## Summaries & Correlation
