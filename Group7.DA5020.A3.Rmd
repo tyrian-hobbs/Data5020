@@ -1,0 +1,11 @@
+---
+title: "Explore Obesity Data"
+author: "Chen, Angeline & Hobbs, Tyrian"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
