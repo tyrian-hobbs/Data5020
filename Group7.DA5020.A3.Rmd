@@ -34,3 +34,10 @@ df.clean |> summarise(across(everything(), ~sum(is.na(.))))
 After removing unnecessary columns and replacing the missing columns in Height and Age, there are no more missing values in our dataset.
 
 ## Outliers & BMI Feature
+``` {r Q3 outliers}
+df.clean <- df.clean |> 
+  filter(abs(Weight - mean(Weight)) <= 2.5 * sd(Weight)) |> #using abs() to remove both tails at once
+  mutate(BMI = Weight/(Height**2))
+```
+
+We filtered `r nrow(df.full)-nrow(df.clean)` rows with weights outside 2.5x the standard deviation. Afterwards, the mean BMI is `r round(mean(df.clean$BMI), digits=3)`.
